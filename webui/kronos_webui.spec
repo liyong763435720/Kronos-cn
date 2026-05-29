@@ -57,6 +57,8 @@ hiddenimports += [
     'sklearn', 'scipy',
     'huggingface_hub', 'safetensors', 'safetensors.torch',
     'model', 'model.kronos', 'model.module',
+    'einops',                          # model/module.py 依赖
+    'tqdm', 'tqdm.auto',               # model/kronos.py 依赖
     'akshare', 'tushare',
     'werkzeug', 'werkzeug.serving', 'werkzeug.middleware',
     'jinja2', 'markupsafe', 'click',
