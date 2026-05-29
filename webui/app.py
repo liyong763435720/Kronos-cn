@@ -17,21 +17,23 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     from model import Kronos, KronosTokenizer, KronosPredictor
     MODEL_AVAILABLE = True
-except ImportError:
+except Exception:
     MODEL_AVAILABLE = False
     print("Warning: Kronos model cannot be imported, will use simulated data for demonstration")
 
 try:
     import akshare as ak
     AKSHARE_AVAILABLE = True
-except ImportError:
+except Exception:
     AKSHARE_AVAILABLE = False
+    print("Warning: AKShare unavailable")
 
 try:
     import tushare as ts
     TUSHARE_AVAILABLE = True
-except ImportError:
+except Exception:
     TUSHARE_AVAILABLE = False
+    print("Warning: Tushare unavailable")
 
 # Token 持久化存储路径
 _TOKEN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.tushare_token')
