@@ -19,6 +19,8 @@ jobs:
   build-macos:
     name: Build macOS (.app + DMG)
     runs-on: macos-14        # Apple Silicon M1，兼容 Intel（通过 Rosetta 2）
+    permissions:
+      contents: write        # 允许创建 Release 和上传附件
 
     steps:
       # ── 1. 检出代码 ──────────────────────────────────────────────────
