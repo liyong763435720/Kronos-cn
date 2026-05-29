@@ -1,24 +1,24 @@
-# Kronos Fine-tuning on Custom CSV Datasets
+# 使用自定义 CSV 数据集对 Kronos 进行微调
 
-This module provides a comprehensive pipeline for fine-tuning Kronos models on your own CSV-formatted financial data. It supports both sequential training (tokenizer followed by predictor) and individual component training, with full distributed training capabilities.
+本模块提供了一套完整的流程，用于在你自己的 CSV 格式金融数据上微调 Kronos 模型。支持顺序训练（先分词器后预测器）和单独组件训练，并具备完整的分布式训练能力。
 
 
-## 1. Data Preparation
+## 1. 数据准备
 
-### Required Data Format
+### 必需的数据格式
 
-Your CSV file must contain the following columns:
-- `timestamps`: DateTime stamps for each data point
-- `open`: Opening price
-- `high`: Highest price
-- `low`: Lowest price  
-- `close`: Closing price
-- `volume`: Trading volume
-- `amount`: Trading amount
+你的 CSV 文件必须包含以下列：
+- `timestamps`：每个数据点的时间戳
+- `open`：开盘价
+- `high`：最高价
+- `low`：最低价
+- `close`：收盘价
+- `volume`：成交量
+- `amount`：成交额
 
-(volume and amount can be 0 if not available)
+（如无成交量和成交额数据，可填 0）
 
-### Sample Data Format
+### 示例数据格式
 
 | timestamps | open | close | high | low | volume | amount |
 |------------|------|-------|------|-----|--------|--------|
@@ -26,95 +26,91 @@ Your CSV file must contain the following columns:
 | 2019/11/26 9:40 | 184.35215 | 183.85215 | 184.55215 | 183.45215 | 4433300 | 0 |
 | 2019/11/26 9:45 | 183.85215 | 183.35215 | 183.95215 | 182.95215 | 3070900 | 0 |
 
-> **Reference**: Check `data/HK_ali_09988_kline_5min_all.csv` for a complete example of the proper data format.
+> **参考**：请查看 `data/HK_ali_09988_kline_5min_all.csv` 了解完整的数据格式示例。
 
 
-## 2. Config Preparation
+## 2. 配置准备
 
-
-Please edit the correct data path & pretrained model path and set your training parameters.
+请编辑正确的数据路径和预训练模型路径，并设置训练参数。
 
 ```yaml
-# Data configuration
+# 数据配置
 data:
   data_path: "/path/to/your/data.csv"
-  lookback_window: 512        # Historical data points to use
-  predict_window: 48           # Future points to predict
-  max_context: 512            # Maximum context length
+  lookback_window: 512        # 使用的历史数据点数
+  predict_window: 48           # 需要预测的未来点数
+  max_context: 512            # 最大上下文长度
 
 ...
 
 ```
-There are some other settings here, please see `configs/config_ali09988_candle-5min.yaml` for more comments.
+还有其他一些设置，请参见 `configs/config_ali09988_candle-5min.yaml` 中的注释说明。
 
-## 3. Training
+## 3. 训练
 
-### Method 1: Sequential Training (Recommended)
+### 方式一：顺序训练（推荐）
 
-The `train_sequential.py` script handles the complete training pipeline automatically:
+`train_sequential.py` 脚本可自动处理完整的训练流程：
 
 ```bash
-# Complete training (tokenizer + predictor)
+# 完整训练（分词器 + 预测器）
 python train_sequential.py --config configs/config_ali09988_candle-5min.yaml
 
-# Skip existing models
+# 跳过已存在的模型
 python train_sequential.py --config configs/config_ali09988_candle-5min.yaml --skip-existing
 
-# Only train tokenizer
+# 仅训练分词器
 python train_sequential.py --config configs/config_ali09988_candle-5min.yaml --skip-basemodel
 
-# Only train predictor
+# 仅训练预测器
 python train_sequential.py --config configs/config_ali09988_candle-5min.yaml --skip-tokenizer
 ```
 
-### Method 2: Individual Component Training
+### 方式二：单独组件训练
 
-Train each component separately for more control:
+分别训练各组件以获得更精细的控制：
 
 ```bash
-# Step 1: Train tokenizer
+# 第一步：训练分词器
 python finetune_tokenizer.py --config configs/config_ali09988_candle-5min.yaml
 
-# Step 2: Train predictor (requires fine-tuned tokenizer)
+# 第二步：训练预测器（需要已微调的分词器）
 python finetune_base_model.py --config configs/config_ali09988_candle-5min.yaml
 ```
 
-### DDP Training
+### DDP 分布式训练
 
-For faster training on multiple GPUs:
+在多 GPU 上加速训练：
 
 ```bash
-# Set communication backend (nccl for NVIDIA GPUs, gloo for CPU/mixed)
+# 设置通信后端（NVIDIA GPU 使用 nccl，CPU/混合使用 gloo）
 DIST_BACKEND=nccl \
 torchrun --standalone --nproc_per_node=8 train_sequential.py --config configs/config_ali09988_candle-5min.yaml
 ```
 
-## 4. Training Results
+## 4. 训练结果
 
-The training process generates several outputs:
+训练过程会生成以下输出：
 
-### Model Checkpoints
-- **Tokenizer**: Saved to `{base_save_path}/{exp_name}/tokenizer/best_model/`
-- **Predictor**: Saved to `{base_save_path}/{exp_name}/basemodel/best_model/`
+### 模型检查点
+- **分词器**：保存至 `{base_save_path}/{exp_name}/tokenizer/best_model/`
+- **预测器**：保存至 `{base_save_path}/{exp_name}/basemodel/best_model/`
 
-### Training Logs
-- **Console output**: Real-time training progress and metrics
-- **Log files**: Detailed logs saved to `{base_save_path}/logs/`
-- **Validation tracking**: Best models are saved based on validation loss
+### 训练日志
+- **控制台输出**：实时训练进度和指标
+- **日志文件**：详细日志保存至 `{base_save_path}/logs/`
+- **验证追踪**：根据验证损失保存最佳模型
 
-## 5. Prediction Vis
+## 5. 预测可视化
 
-The following images show example training results on alibaba (HK stock) data:
+以下图片展示了在阿里巴巴（港股）数据上的训练结果示例：
 
-![Training Result 1](examples/HK_ali_09988_kline_5min_all_historical_20250919_073929.png)
+![训练结果 1](examples/HK_ali_09988_kline_5min_all_historical_20250919_073929.png)
 
-![Training Result 2](examples/HK_ali_09988_kline_5min_all_historical_20250919_073944.png)
+![训练结果 2](examples/HK_ali_09988_kline_5min_all_historical_20250919_073944.png)
 
-![Training Result 3](examples/HK_ali_09988_kline_5min_all_historical_20250919_074012.png)
+![训练结果 3](examples/HK_ali_09988_kline_5min_all_historical_20250919_074012.png)
 
-![Training Result 4](examples/HK_ali_09988_kline_5min_all_historical_20250919_074042.png)
+![训练结果 4](examples/HK_ali_09988_kline_5min_all_historical_20250919_074042.png)
 
-![Training Result 5](examples/HK_ali_09988_kline_5min_all_historical_20250919_074251.png)
-
-
-
+![训练结果 5](examples/HK_ali_09988_kline_5min_all_historical_20250919_074251.png)

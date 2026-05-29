@@ -74,3 +74,10 @@ venv.bak/
 temp/
 tmp/
 .python-version
+
+# 本地敏感数据 / 用户私有文件
+.claude/
+data/
+webui/.tushare_token
+webui/prediction_results/
+启动 Kronos WebUI.bat
