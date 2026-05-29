@@ -4,43 +4,73 @@ PyInstaller 打包入口。
 """
 import os
 import sys
+import traceback
 
 # ── 1. 确定运行根目录 ──────────────────────────────────────────────────
 if getattr(sys, 'frozen', False):
-    # PyInstaller 打包后，所有资源解压在 sys._MEIPASS
     BASE_DIR = sys._MEIPASS
-    # 应用程序实际所在目录（exe 旁边），用于读写用户数据
-    APP_DIR = os.path.dirname(sys.executable)
+    APP_DIR  = os.path.dirname(sys.executable)
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     APP_DIR  = BASE_DIR
 
-# ── 2. 将 HF 缓存指向打包目录内的 hf_home ────────────────────────────
-os.environ['HF_HOME']            = os.path.join(BASE_DIR, 'hf_home')
-os.environ['HUGGINGFACE_HUB_CACHE'] = os.path.join(BASE_DIR, 'hf_home', 'hub')
-os.environ['TRANSFORMERS_CACHE']    = os.path.join(BASE_DIR, 'hf_home', 'hub')
+# ── 2. 错误日志路径（写到 exe 同级目录，方便排查）────────────────────
+LOG_FILE = os.path.join(APP_DIR, 'kronos_error.log')
 
-# ── 3. 把项目根目录加入 sys.path（让 model 包可以 import）───────────────
-sys.path.insert(0, BASE_DIR)
+def log(msg):
+    """同时输出到控制台和日志文件。"""
+    print(msg, flush=True)
+    try:
+        with open(LOG_FILE, 'a', encoding='utf-8') as f:
+            f.write(msg + '\n')
+    except Exception:
+        pass
 
-# ── 4. 重定向用户数据目录到 exe 旁边（data / prediction_results）──────
-os.environ['KRONOS_DATA_DIR']    = os.path.join(APP_DIR, 'data')
-os.environ['KRONOS_RESULTS_DIR'] = os.path.join(APP_DIR, 'prediction_results')
-os.makedirs(os.environ['KRONOS_DATA_DIR'],    exist_ok=True)
-os.makedirs(os.environ['KRONOS_RESULTS_DIR'], exist_ok=True)
+def fatal(msg):
+    """致命错误：写日志后等待用户按键再退出，避免闪退。"""
+    log('\n[FATAL] ' + msg)
+    log(f'详细日志请查看：{LOG_FILE}')
+    if getattr(sys, 'frozen', False):
+        input('\n按 Enter 键退出...')
+    sys.exit(1)
 
-# ── 5. Flask template / static 路径 ──────────────────────────────────
-os.environ['KRONOS_TEMPLATE_DIR'] = os.path.join(BASE_DIR, 'templates')
+try:
+    # ── 3. 将 HF 缓存指向打包目录内的 hf_home ──────────────────────────
+    os.environ['HF_HOME']               = os.path.join(BASE_DIR, 'hf_home')
+    os.environ['HUGGINGFACE_HUB_CACHE'] = os.path.join(BASE_DIR, 'hf_home', 'hub')
+    os.environ['TRANSFORMERS_CACHE']    = os.path.join(BASE_DIR, 'hf_home', 'hub')
 
-# ── 6. 启动 Flask ──────────────────────────────────────────────────────
-import threading, webbrowser, time
+    # ── 4. 把项目根目录加入 sys.path（让 model 包可以 import）─────────
+    sys.path.insert(0, BASE_DIR)
 
-def open_browser():
-    time.sleep(2)
-    webbrowser.open('http://localhost:7070')
+    # ── 5. 重定向用户数据目录到 exe 旁边 ────────────────────────────────
+    os.environ['KRONOS_DATA_DIR']    = os.path.join(APP_DIR, 'data')
+    os.environ['KRONOS_RESULTS_DIR'] = os.path.join(APP_DIR, 'prediction_results')
+    os.makedirs(os.environ['KRONOS_DATA_DIR'],    exist_ok=True)
+    os.makedirs(os.environ['KRONOS_RESULTS_DIR'], exist_ok=True)
 
-threading.Thread(target=open_browser, daemon=True).start()
+    # ── 6. Flask template 路径 ───────────────────────────────────────────
+    os.environ['KRONOS_TEMPLATE_DIR'] = os.path.join(BASE_DIR, 'templates')
 
-# 导入 app（app.py 会读上面设置的环境变量）
-import app as flask_app
-flask_app.app.run(debug=False, host='127.0.0.1', port=7070)
+    log(f'[OK] BASE_DIR = {BASE_DIR}')
+    log(f'[OK] APP_DIR  = {APP_DIR}')
+
+    # ── 7. 启动 Flask + 自动打开浏览器 ──────────────────────────────────
+    import threading
+    import webbrowser
+    import time
+
+    PORT = 7070
+
+    def open_browser():
+        time.sleep(2.5)
+        webbrowser.open(f'http://localhost:{PORT}')
+
+    threading.Thread(target=open_browser, daemon=True).start()
+
+    log(f'[OK] 正在启动 Flask，端口 {PORT}...')
+    import app as flask_app
+    flask_app.app.run(debug=False, host='127.0.0.1', port=PORT)
+
+except Exception:
+    fatal(traceback.format_exc())
