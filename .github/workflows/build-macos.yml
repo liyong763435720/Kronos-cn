@@ -65,43 +65,26 @@ jobs:
           echo "打包完成，.app 大小："
           du -sh dist/KronosWebUI.app
 
-      # ── 6. 生成 DMG 安装镜像 ─────────────────────────────────────────
+      # ── 6. 安装 create-dmg 并生成 DMG ───────────────────────────────
+      - name: Install create-dmg
+        run: brew install create-dmg
+
       - name: Create DMG
         working-directory: webui
         run: |
-          APP_PATH="dist/KronosWebUI.app"
-          DMG_PATH="dist/KronosWebUI.dmg"
-          DMG_TMP="dist/KronosWebUI_rw.dmg"
-          VOLNAME="Kronos WebUI"
-          STAGING="dist/dmg_staging"
-
-          # 准备 staging 目录（含 Applications 软链接）
-          rm -rf "$STAGING"
-          mkdir -p "$STAGING"
-          cp -R "$APP_PATH" "$STAGING/"
-          ln -sf /Applications "$STAGING/Applications"
-
-          # 创建可读写 DMG
-          hdiutil create \
-            -srcfolder "$STAGING" \
-            -volname "$VOLNAME" \
-            -fs HFS+ \
-            -fsargs "-c c=64,a=16,b=16" \
-            -format UDRW \
-            -size 3g \
-            "$DMG_TMP"
-
-          # 转为只读压缩格式
-          hdiutil convert "$DMG_TMP" \
-            -format UDZO \
-            -imagekey zlib-level=9 \
-            -o "$DMG_PATH"
-
-          rm -f "$DMG_TMP"
-          rm -rf "$STAGING"
+          create-dmg \
+            --volname "Kronos WebUI" \
+            --window-size 540 380 \
+            --icon-size 128 \
+            --icon "KronosWebUI.app" 130 160 \
+            --app-drop-link 400 160 \
+            --hide-extension "KronosWebUI.app" \
+            --no-internet-enable \
+            "dist/KronosWebUI.dmg" \
+            "dist/KronosWebUI.app"
 
           echo "DMG 生成完成："
-          ls -lh "$DMG_PATH"
+          ls -lh dist/KronosWebUI.dmg
 
       # ── 7. 上传 Artifact（任何触发方式都会上传，保留 30 天）─────────
       - name: Upload DMG as artifact
