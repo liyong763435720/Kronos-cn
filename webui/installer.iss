@@ -4,7 +4,7 @@
 #define AppName      "Kronos WebUI"
 #define AppVersion   "1.0.0"
 #define AppPublisher "Kronos Project"
-#define AppURL       "https://github.com/shiyu-coder/Kronos"
+#define AppURL       "https://github.com/liyong763435720/Kronos-cn"
 #define AppExeName   "KronosWebUI.exe"
 #define DistDir      "dist\KronosWebUI"
 

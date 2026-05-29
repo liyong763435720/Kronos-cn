@@ -1,0 +1,102 @@
+name: Build Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows (.exe installer)
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      # ── 1. 检出代码 ──────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. 安装 Python 3.11 ──────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── 3. 缓存 pip 包 ────────────────────────────────────────────────
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'webui/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # ── 4. 安装所有依赖 ──────────────────────────────────────────────
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r webui/requirements.txt
+          pip install `
+            pyinstaller `
+            akshare `
+            tushare `
+            scikit-learn `
+            scipy `
+            "safetensors==0.6.2" `
+            "einops==0.8.1"
+
+      # ── 5. PyInstaller 打包 ──────────────────────────────────────────
+      - name: Build with PyInstaller
+        working-directory: webui
+        run: |
+          python -m PyInstaller kronos_webui.spec --noconfirm
+          Write-Host "打包完成，文件夹大小："
+          (Get-ChildItem dist\KronosWebUI -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+
+      # ── 6. 安装 Inno Setup 并打包成安装程序 ──────────────────────────
+      - name: Install Inno Setup
+        run: choco install innosetup --yes
+
+      - name: Build installer with Inno Setup
+        working-directory: webui
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+          Write-Host "安装包生成完成："
+          Get-Item dist\KronosWebUI_Setup.exe | Select-Object Name, Length
+
+      # ── 7. 上传 Artifact ─────────────────────────────────────────────
+      - name: Upload installer as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KronosWebUI-Windows-${{ github.sha }}
+          path: webui/dist/KronosWebUI_Setup.exe
+          retention-days: 30
+
+      # ── 8. 发布 GitHub Release ────────────────────────────────────────
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Kronos WebUI ${{ github.ref_name }}
+          body: |
+            ## Kronos WebUI ${{ github.ref_name }}
+
+            ### Windows 安装包
+            下载 `KronosWebUI_Setup.exe`，双击安装即可。
+
+            - 系统要求：Windows 10 及以上
+            - 首次加载模型需要联网（从 HuggingFace 下载）
+
+            ### macOS 安装包
+            下载 `KronosWebUI.dmg`，拖入 Applications 即可。
+
+            - 系统要求：macOS 12 及以上（支持 Apple Silicon 和 Intel）
+            - 首次运行需右键 → 打开（绕过安全提示）
+          files: |
+            webui/dist/KronosWebUI_Setup.exe
+          draft: false
+          prerelease: false
