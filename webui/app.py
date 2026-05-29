@@ -17,9 +17,23 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     from model import Kronos, KronosTokenizer, KronosPredictor
     MODEL_AVAILABLE = True
-except Exception:
+except Exception as _model_err:
+    import traceback as _tb
     MODEL_AVAILABLE = False
-    print("Warning: Kronos model cannot be imported, will use simulated data for demonstration")
+    _err_msg = _tb.format_exc()
+    print(f"Warning: Kronos model import failed:\n{_err_msg}")
+    # 写入日志文件方便排查
+    try:
+        import os as _os
+        _log = _os.path.join(
+            _os.environ.get('APPDATA', _os.path.expanduser('~')),
+            'KronosWebUI', 'model_import_error.log'
+        )
+        _os.makedirs(_os.path.dirname(_log), exist_ok=True)
+        with open(_log, 'w', encoding='utf-8') as _f:
+            _f.write(_err_msg)
+    except Exception:
+        pass
 
 try:
     import akshare as ak
