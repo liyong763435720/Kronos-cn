@@ -39,22 +39,7 @@ jobs:
           key: kronos-models-v1
 
       - name: Download Kronos models
-        run: |
-          python -c "
-import os
-from huggingface_hub import snapshot_download
-models = [
-    'NeoQuasar/Kronos-Tokenizer-2k',
-    'NeoQuasar/Kronos-mini',
-    'NeoQuasar/Kronos-Tokenizer-base',
-    'NeoQuasar/Kronos-small',
-    'NeoQuasar/Kronos-base',
-]
-for repo in models:
-    print(f'Downloading {repo}...')
-    snapshot_download(repo_id=repo)
-    print(f'Done: {repo}')
-"
+        run: python webui/download_models.py
 
       - name: Convert icon PNG to ICO
         run: |
@@ -112,22 +97,7 @@ for repo in models:
           key: kronos-models-v1
 
       - name: Download Kronos models
-        run: |
-          python -c "
-import os
-from huggingface_hub import snapshot_download
-models = [
-    'NeoQuasar/Kronos-Tokenizer-2k',
-    'NeoQuasar/Kronos-mini',
-    'NeoQuasar/Kronos-Tokenizer-base',
-    'NeoQuasar/Kronos-small',
-    'NeoQuasar/Kronos-base',
-]
-for repo in models:
-    print(f'Downloading {repo}...')
-    snapshot_download(repo_id=repo)
-    print(f'Done: {repo}')
-"
+        run: python webui/download_models.py
 
       - name: Convert icon PNG to ICNS
         run: |
