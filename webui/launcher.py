@@ -46,16 +46,28 @@ try:
     log(f'BASE_DIR = {BASE_DIR}')
     log(f'APP_DIR  = {APP_DIR}')
 
-    # ── 3. 环境变量设置 ────────────────────────────────────────────────
-    os.environ['HF_HOME']               = os.path.join(BASE_DIR, 'hf_home')
-    os.environ['HUGGINGFACE_HUB_CACHE'] = os.path.join(BASE_DIR, 'hf_home', 'hub')
-    os.environ['TRANSFORMERS_CACHE']    = os.path.join(BASE_DIR, 'hf_home', 'hub')
-    os.environ['KRONOS_DATA_DIR']       = os.path.join(APP_DIR, 'data')
-    os.environ['KRONOS_RESULTS_DIR']    = os.path.join(APP_DIR, 'prediction_results')
+    # ── 3. 用户数据目录（使用 %APPDATA% 确保可写）────────────────────
+    # Program Files 下无写入权限，所有用户数据放到 AppData
+    USER_DATA = os.path.join(
+        os.environ.get('APPDATA', os.path.expanduser('~')),
+        'KronosWebUI'
+    )
+    HF_DIR      = os.path.join(USER_DATA, 'hf_home')
+    DATA_DIR    = os.path.join(USER_DATA, 'data')
+    RESULTS_DIR = os.path.join(USER_DATA, 'prediction_results')
+
+    for d in [HF_DIR, DATA_DIR, RESULTS_DIR]:
+        os.makedirs(d, exist_ok=True)
+
+    os.environ['HF_HOME']               = HF_DIR
+    os.environ['HUGGINGFACE_HUB_CACHE'] = os.path.join(HF_DIR, 'hub')
+    os.environ['TRANSFORMERS_CACHE']    = os.path.join(HF_DIR, 'hub')
+    os.environ['KRONOS_DATA_DIR']       = DATA_DIR
+    os.environ['KRONOS_RESULTS_DIR']    = RESULTS_DIR
     os.environ['KRONOS_TEMPLATE_DIR']   = os.path.join(BASE_DIR, 'templates')
 
-    os.makedirs(os.environ['KRONOS_DATA_DIR'],    exist_ok=True)
-    os.makedirs(os.environ['KRONOS_RESULTS_DIR'], exist_ok=True)
+    log(f'[OK] 用户数据目录：{USER_DATA}')
+    log(f'[OK] 模型缓存目录：{HF_DIR}')
 
     # ── 4. 修复 frozen 环境下 app.py 的 __file__ 路径问题 ────────────
     sys.path.insert(0, BASE_DIR)

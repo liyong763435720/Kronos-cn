@@ -15,7 +15,7 @@ AppVersion={#AppVersion}
 AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
-DefaultDirName={autopf}\{#AppName}
+DefaultDirName={localappdata}\{#AppName}
 DefaultGroupName={#AppName}
 AllowNoIcons=yes
 ; 压缩设置（fast 模式减少临时空间占用）
@@ -24,8 +24,8 @@ SolidCompression=no
 ; 输出
 OutputDir=dist
 OutputBaseFilename=KronosWebUI_Setup
-; 需要管理员权限安装到 Program Files
-PrivilegesRequired=admin
+; 用户级安装，无需管理员权限，避免 Program Files 写入限制
+PrivilegesRequired=lowest
 ; 向导样式
 WizardStyle=modern
 ; 最低 Windows 版本：Windows 10
