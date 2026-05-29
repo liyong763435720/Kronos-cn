@@ -46,31 +46,35 @@ try:
     log(f'BASE_DIR = {BASE_DIR}')
     log(f'APP_DIR  = {APP_DIR}')
 
-    # ── 3. 用户数据目录（使用 %APPDATA% 确保可写）────────────────────
-    # Program Files 下无写入权限，所有用户数据放到 AppData
-    USER_DATA = os.path.join(
-        os.environ.get('APPDATA', os.path.expanduser('~')),
-        'KronosWebUI'
-    )
-    HF_DIR      = os.path.join(USER_DATA, 'hf_home')
+    # ── 3. 用户数据目录 ───────────────────────────────────────────────
+    USER_DATA   = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'KronosWebUI')
     DATA_DIR    = os.path.join(USER_DATA, 'data')
     RESULTS_DIR = os.path.join(USER_DATA, 'prediction_results')
-
-    for d in [HF_DIR, DATA_DIR, RESULTS_DIR]:
+    for d in [DATA_DIR, RESULTS_DIR]:
         os.makedirs(d, exist_ok=True)
 
-    os.environ['HF_HOME']               = HF_DIR
-    os.environ['HUGGINGFACE_HUB_CACHE'] = os.path.join(HF_DIR, 'hub')
-    os.environ['TRANSFORMERS_CACHE']    = os.path.join(HF_DIR, 'hub')
-    os.environ['KRONOS_DATA_DIR']       = DATA_DIR
-    os.environ['KRONOS_RESULTS_DIR']    = RESULTS_DIR
-    os.environ['KRONOS_TEMPLATE_DIR']   = os.path.join(BASE_DIR, 'templates')
-
-    # 使用国内 HuggingFace 镜像（解决大陆网络访问问题）
-    os.environ.setdefault('HF_ENDPOINT', 'https://hf-mirror.com')
-
+    os.environ['KRONOS_DATA_DIR']     = DATA_DIR
+    os.environ['KRONOS_RESULTS_DIR']  = RESULTS_DIR
+    os.environ['KRONOS_TEMPLATE_DIR'] = os.path.join(BASE_DIR, 'templates')
     log(f'[OK] 用户数据目录：{USER_DATA}')
-    log(f'[OK] 模型缓存目录：{HF_DIR}')
+
+    # ── 4. 模型目录：优先内置（离线），否则联网下载 ──────────────────
+    BUNDLED_HF = os.path.join(BASE_DIR, 'hf_home')
+    USER_HF    = os.path.join(USER_DATA, 'hf_home')
+
+    if os.path.isdir(os.path.join(BUNDLED_HF, 'hub')):
+        os.environ['HF_HOME']                  = BUNDLED_HF
+        os.environ['HUGGINGFACE_HUB_CACHE']    = os.path.join(BUNDLED_HF, 'hub')
+        os.environ['TRANSFORMERS_CACHE']       = os.path.join(BUNDLED_HF, 'hub')
+        os.environ['HUGGINGFACE_HUB_OFFLINE']  = '1'
+        log(f'[OK] 使用内置模型（离线模式）：{BUNDLED_HF}')
+    else:
+        os.makedirs(USER_HF, exist_ok=True)
+        os.environ['HF_HOME']               = USER_HF
+        os.environ['HUGGINGFACE_HUB_CACHE'] = os.path.join(USER_HF, 'hub')
+        os.environ['TRANSFORMERS_CACHE']    = os.path.join(USER_HF, 'hub')
+        os.environ.setdefault('HF_ENDPOINT', 'https://hf-mirror.com')
+        log(f'[OK] 无内置模型，使用用户目录（在线下载）：{USER_HF}')
 
     # ── 4. 修复 frozen 环境下 app.py 的 __file__ 路径问题 ────────────
     sys.path.insert(0, BASE_DIR)
