@@ -34,12 +34,7 @@ jobs:
 
       - name: Convert icon PNG to ICO
         run: |
-          python -c "
-from PIL import Image
-img = Image.open('figures/logo.png').convert('RGBA')
-img.save('webui/icon.ico', format='ICO', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])
-print('icon.ico generated')
-"
+          python -c "from PIL import Image; img = Image.open('figures/logo.png').convert('RGBA'); img.save('webui/icon.ico', format='ICO', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)]); print('icon.ico generated')"
 
       - name: Build with PyInstaller
         working-directory: webui
