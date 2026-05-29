@@ -47,7 +47,8 @@ datas += [(os.path.join(WEBUI_DIR, 'templates'), 'templates')]
 datas += [(os.path.join(ROOT_DIR, 'model'), 'model')]
 
 # HuggingFace 模型缓存（含全部模型，约 557MB）
-datas += [(HF_CACHE, 'hf_home/hub')]
+if os.path.isdir(HF_CACHE):
+    datas += [(HF_CACHE, 'hf_home/hub')]
 
 # ── 隐式导入补全 ────────────────────────────────────────────────────────
 hiddenimports += [
