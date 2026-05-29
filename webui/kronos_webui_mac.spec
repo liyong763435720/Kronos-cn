@@ -40,12 +40,16 @@ hiddenimports += hf_hidden
 # safetensors
 datas += collect_data_files('safetensors')
 
+# einops（model/module.py 依赖）
+einops_datas, einops_bins, einops_hidden = collect_all('einops')
+datas += einops_datas
+hiddenimports += einops_hidden
+
 # ── 项目自身文件 ────────────────────────────────────────────────────────
 # Flask 模板
 datas += [(os.path.join(WEBUI_DIR, 'templates'), 'templates')]
 
-# Kronos model 包
-datas += [(os.path.join(ROOT_DIR, 'model'), 'model')]
+# Kronos model 包（通过 pathex + hiddenimports 编译进二进制，无需 datas）
 
 # HuggingFace 模型缓存（含全部模型，约 557MB）
 if os.path.isdir(HF_CACHE):

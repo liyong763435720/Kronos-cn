@@ -49,8 +49,11 @@ except Exception:
     TUSHARE_AVAILABLE = False
     print("Warning: Tushare unavailable")
 
-# Token 持久化存储路径
-_TOKEN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.tushare_token')
+# Token 持久化存储路径（优先写到 APPDATA 可写目录，打包环境下 __file__ 目录只读）
+_TOKEN_FILE = os.path.join(
+    os.environ.get('APPDATA', os.path.dirname(os.path.abspath(__file__))),
+    'KronosWebUI', '.tushare_token'
+)
 
 def _load_tushare_token():
     if os.path.exists(_TOKEN_FILE):
