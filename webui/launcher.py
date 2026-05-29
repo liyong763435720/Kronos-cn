@@ -66,6 +66,9 @@ try:
     os.environ['KRONOS_RESULTS_DIR']    = RESULTS_DIR
     os.environ['KRONOS_TEMPLATE_DIR']   = os.path.join(BASE_DIR, 'templates')
 
+    # 使用国内 HuggingFace 镜像（解决大陆网络访问问题）
+    os.environ.setdefault('HF_ENDPOINT', 'https://hf-mirror.com')
+
     log(f'[OK] 用户数据目录：{USER_DATA}')
     log(f'[OK] 模型缓存目录：{HF_DIR}')
 

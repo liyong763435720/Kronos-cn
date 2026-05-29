@@ -844,7 +844,14 @@ def load_model():
         })
         
     except Exception as e:
-        return jsonify({'error': f'模型加载失败：{str(e)}'}), 500
+        err = str(e)
+        if any(k in err.lower() for k in ['connection', 'timeout', 'network', 'ssl', 'resolve', 'connect']):
+            tip = '网络连接失败，请检查网络或稍后重试（国内用户可能需要代理访问 HuggingFace）'
+        elif 'model_available' in err or not MODEL_AVAILABLE:
+            tip = 'Kronos 模型库未能正确加载，请查看启动日志'
+        else:
+            tip = err
+        return jsonify({'error': f'模型加载失败：{tip}'}), 500
 
 @app.route('/api/available-models')
 def get_available_models():
