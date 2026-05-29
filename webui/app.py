@@ -811,7 +811,7 @@ def load_model():
     
     try:
         if not MODEL_AVAILABLE:
-            return jsonify({'error': 'Kronos 模型库不可用'}), 400
+            return jsonify({'error': f'Kronos 模型库不可用，请查看 %APPDATA%\\KronosWebUI\\model_import_error.log 了解详情'}), 400
         
         data = request.get_json()
         model_key = data.get('model_key', 'kronos-small')

@@ -814,13 +814,14 @@
         async function loadAvailableModels() {
             try {
                 const response = await axios.get('/api/available-models');
-                if (response.data.model_available) {
-                    availableModels = response.data.models;
-                    populateModelSelect();
-                    console.log('✅ 可用模型加载成功：', availableModels);
+                // 无论模型库是否可用，都展示模型列表，加载时再报具体错误
+                availableModels = response.data.models;
+                populateModelSelect();
+                if (!response.data.model_available) {
+                    console.warn('⚠️ Kronos 模型库初始化异常');
+                    showStatus('warning', '模型库初始化异常，请点击"加载模型"查看详情');
                 } else {
-                    console.warn('⚠️ Kronos 模型库不可用');
-                    showStatus('warning', 'Kronos 模型库不可用，将使用模拟预测');
+                    console.log('✅ 可用模型加载成功：', availableModels);
                 }
             } catch (error) {
                 console.error('❌ 加载可用模型失败：', error);
