@@ -94,7 +94,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=True,          # 保留控制台窗口，方便看日志/错误
-    icon=None,             # 有 ico 文件可填路径，如 'icon.ico'
+    icon=os.path.join(WEBUI_DIR, 'icon.ico') if os.path.exists(os.path.join(WEBUI_DIR, 'icon.ico')) else None,
 )
 
 coll = COLLECT(

@@ -48,7 +48,18 @@ jobs:
             "safetensors==0.6.2" `
             "einops==0.8.1"
 
-      # ── 5. PyInstaller 打包 ──────────────────────────────────────────
+      # ── 5. 转换图标 PNG → ICO ────────────────────────────────────────
+      - name: Convert icon PNG to ICO
+        run: |
+          pip install Pillow
+          python -c "
+from PIL import Image
+img = Image.open('figures/logo.png').convert('RGBA')
+img.save('webui/icon.ico', format='ICO', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])
+print('icon.ico generated')
+"
+
+      # ── 6. PyInstaller 打包 ──────────────────────────────────────────
       - name: Build with PyInstaller
         working-directory: webui
         run: |
@@ -56,7 +67,7 @@ jobs:
           Write-Host "打包完成，文件夹大小："
           (Get-ChildItem dist\KronosWebUI -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
 
-      # ── 6. 安装 Inno Setup 并打包成安装程序 ──────────────────────────
+      # ── 7. 安装 Inno Setup 并打包成安装程序 ──────────────────────────
       - name: Install Inno Setup
         run: choco install innosetup --yes
 

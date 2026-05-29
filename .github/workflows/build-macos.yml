@@ -59,7 +59,24 @@ jobs:
             safetensors==0.6.2 \
             einops==0.8.1
 
-      # ── 5. PyInstaller 打包 ──────────────────────────────────────────
+      # ── 5. 转换图标 PNG → ICNS ──────────────────────────────────────
+      - name: Convert icon PNG to ICNS
+        run: |
+          mkdir -p icon.iconset
+          sips -z 16   16   figures/logo.png --out icon.iconset/icon_16x16.png
+          sips -z 32   32   figures/logo.png --out icon.iconset/icon_16x16@2x.png
+          sips -z 32   32   figures/logo.png --out icon.iconset/icon_32x32.png
+          sips -z 64   64   figures/logo.png --out icon.iconset/icon_32x32@2x.png
+          sips -z 128  128  figures/logo.png --out icon.iconset/icon_128x128.png
+          sips -z 256  256  figures/logo.png --out icon.iconset/icon_128x128@2x.png
+          sips -z 256  256  figures/logo.png --out icon.iconset/icon_256x256.png
+          sips -z 512  512  figures/logo.png --out icon.iconset/icon_256x256@2x.png
+          sips -z 512  512  figures/logo.png --out icon.iconset/icon_512x512.png
+          sips -z 1024 1024 figures/logo.png --out icon.iconset/icon_512x512@2x.png
+          iconutil -c icns icon.iconset -o webui/icon.icns
+          echo "icon.icns generated"
+
+      # ── 6. PyInstaller 打包 ──────────────────────────────────────────
       - name: Build with PyInstaller
         working-directory: webui
         run: |

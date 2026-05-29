@@ -95,7 +95,7 @@ exe = EXE(
     strip=False,
     upx=False,             # macOS 上 UPX 兼容性差，关闭
     console=False,         # macOS .app 不显示终端窗口
-    icon=None,             # 有 .icns 文件可填路径，如 'icon.icns'
+    icon=os.path.join(WEBUI_DIR, 'icon.icns') if os.path.exists(os.path.join(WEBUI_DIR, 'icon.icns')) else None,
 )
 
 coll = COLLECT(
@@ -112,7 +112,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='KronosWebUI.app',
-    icon=None,             # 有 .icns 文件可填路径
+    icon=os.path.join(WEBUI_DIR, 'icon.icns') if os.path.exists(os.path.join(WEBUI_DIR, 'icon.icns')) else None,
     bundle_identifier='com.kronos.webui',
     info_plist={
         'CFBundleName': 'KronosWebUI',
